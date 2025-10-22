@@ -1,0 +1,8 @@
+*.csv
+hyperparameter_intermediate_f1_score.npy
+hyperparameter_intermediate.npy
+\final_preprocessed_datasets
+\NLSTnosegdata
+\NLST_seg_data
+*.txt
+*.h5
