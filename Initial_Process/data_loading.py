@@ -31,11 +31,12 @@ train_transforms = transforms.Compose([
 ])
 
 class NLSTDataset(Dataset):
-    def __init__(self,lung_image_directory,lung_table_directory, image_transform = None,show_pid = False):
+    def __init__(self,lung_image_directory,lung_table_directory, image_transform = None,show_pid = False, EHR_category = True):
         print("Loading Data....")
         lung_cancer_type_arr,lung_cancer_type_pid_arr = Loadh5(directory= lung_image_directory)
         Lung_Cancer_EHR = pd.read_csv(lung_table_directory)
-        self.data = NLST_ItemGenerator(lung_cancer_type_pid_arr,lung_cancer_type_arr,Lung_Cancer_EHR)
+        if EHR_category:
+            self.data = NLST_ItemGenerator(lung_cancer_type_pid_arr,lung_cancer_type_arr,Lung_Cancer_EHR)
         print("Loading Done!")
         self.transform = image_transform
         self.show_pid = show_pid
@@ -57,14 +58,18 @@ class NLSTDataset(Dataset):
             return {'pid':pid,'image':image,'table':table_data}, label
 
         return {'image': image, 'table': table_data}, label
+    
+    def get_all_pids(self):
+        pid_list = [item['pid'] for item in self.data]
+        return pid_list
 
 
-def NLST_ItemGenerator(array_pids,array_images,lungcancer_df,dict_labels={'No Lung Cancer': 0,'Stage IV':1,'Stage IA':1, 'Stage IB':1, 'Stage IIA':1, 'Stage IIIA':1,'Stage IIIB':1, 'Stage IIB':1}):
+def NLST_ItemGenerator(array_pids,array_images,lungcancer_df,dict_labels={'No Lung Cancer': 0,'Stage IV':1,'Stage IA':1, 'Stage IB':1, 'Stage IIA':1, 'Stage IIIA':1,'Stage IIIB':1, 'Stage IIB':1},category = False):
     dict_list = []
     dict_label_list = dict_labels
     for index,dict_items in enumerate(array_pids):
         dataframe = lungcancer_df[lungcancer_df['ID']==dict_items]
-        table_item = dataframe[['race','cigsmok','gender','age']].to_numpy()[0]
+        table_item = dataframe.iloc[:,1:-1].to_numpy()[0]
         label_item = dict_label_list[dataframe['Stage AJCC7th'].to_numpy()[0]]
         dict_list.append({'pid': dict_items, 'image':array_images[index],'table':table_item,'label':label_item})
     return dict_list
